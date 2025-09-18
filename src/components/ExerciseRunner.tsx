@@ -29,6 +29,12 @@ export default function ExerciseRunner({ exerciseId }: { exerciseId: number }) {
   }
 
   useEffect(() => { refreshHistory(); }, [exerciseId]);
+  useEffect(() => {
+    const onChanged = () => refreshHistory();
+    const listener = onChanged as EventListener;
+    if (typeof window !== 'undefined') window.addEventListener('history:changed', listener);
+    return () => { if (typeof window !== 'undefined') window.removeEventListener('history:changed', listener); };
+  }, [exerciseId]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [history.length]);
 
   const onSubmit = async (answer: string, file?: File) => {
@@ -48,11 +54,11 @@ export default function ExerciseRunner({ exerciseId }: { exerciseId: number }) {
         const data = await res.json().catch(()=>({ error: 'Erreur' }));
         throw new Error(data.error || 'Erreur lors de l\'envoi');
       }
-  const data = await res.json();
+      const data = await res.json();
       setFeedback(data.item.feedback);
       setScore(data.item.score);
-  // Update existing conversation without duplicating the block elsewhere
-  refreshHistory();
+      // Update existing conversation without duplicating the block elsewhere
+      refreshHistory();
       if (ttsEnabled && typeof window !== 'undefined' && data.item.feedback) {
         const onEnd = () => {
           if (conversationMode && answerApiRef.current?.start) {
@@ -80,7 +86,7 @@ export default function ExerciseRunner({ exerciseId }: { exerciseId: number }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-exerciseid={exerciseId}>
       <div className="border rounded p-4 bg-gray-50">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-base font-semibold">Conversation</h3>
@@ -105,7 +111,7 @@ export default function ExerciseRunner({ exerciseId }: { exerciseId: number }) {
         )}
       </div>
       <div className="flex items-center justify-between">
-        <AnswerForm onSubmit={onSubmit} apiRef={answerApiRef} conversationMode={conversationMode} />
+        <AnswerForm onSubmit={onSubmit} apiRef={answerApiRef} conversationMode={conversationMode} exerciseId={exerciseId} />
         <button type="button" onClick={()=>setCalcOpen(true)} className="ml-3 px-3 py-2 rounded border bg-white hover:bg-gray-50 text-sm">Calculatrice</button>
       </div>
       <div className="flex items-center gap-2">
