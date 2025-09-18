@@ -1,0 +1,5 @@
+-- Logical rename handled via Prisma schema mapping (@map/@@map)
+-- No physical changes required for SQLite. Keeping this migration as a note.
+-- Existing table PdfExercise is now mapped to model ImageExercise.
+-- Existing column pdfPath is now mapped to model field imagePath.
+-- Existing Submission column pdfExerciseId is now mapped to field imageExerciseId.
