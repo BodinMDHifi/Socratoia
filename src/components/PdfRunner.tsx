@@ -94,7 +94,13 @@ export default function PdfRunner({ pdfId, title, level, topic, selectedImagePat
       </div>
 
       <div className="flex items-center justify-between">
-        <AnswerForm onSubmit={onSubmit} apiRef={answerApiRef} conversationMode={conversationMode} />
+        <AnswerForm
+          onSubmit={onSubmit}
+          apiRef={answerApiRef}
+          conversationMode={conversationMode}
+          pdfExerciseId={pdfId}
+          pageImagePath={selectedImagePath}
+        />
         <button type="button" onClick={()=>setCalcOpen(true)} className="ml-3 px-3 py-2 rounded border bg-white hover:bg-gray-50 text-sm">Calculatrice</button>
       </div>
       <div className="flex items-center gap-2">

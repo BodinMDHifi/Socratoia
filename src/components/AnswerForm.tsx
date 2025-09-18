@@ -1,9 +1,20 @@
 "use client";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import DrawingPad from './DrawingPad';
 import { speakText } from '@/lib/tts';
 
-export default function AnswerForm({ onSubmit, apiRef, conversationMode }: { onSubmit: (answer: string, file?: File)=>Promise<void> | void; apiRef?: React.MutableRefObject<{ start: ()=>void; stop: ()=>void; isListening: ()=>boolean } | null>; conversationMode?: boolean }) {
+type VoiceApi = { start: ()=>void; stop: ()=>void; isListening: ()=>boolean };
+
+type AnswerFormProps = {
+  onSubmit: (answer: string, file?: File)=>Promise<void> | void;
+  apiRef?: MutableRefObject<VoiceApi | null> | null;
+  conversationMode?: boolean;
+  exerciseId?: number;
+  pdfExerciseId?: number;
+  pageImagePath?: string;
+};
+
+export default function AnswerForm({ onSubmit, apiRef, conversationMode, exerciseId, pdfExerciseId, pageImagePath }: AnswerFormProps) {
   const [answer, setAnswer] = useState('');
   const [file, setFile] = useState<File | undefined>(undefined);
   const [padOpen, setPadOpen] = useState(false);
@@ -37,17 +48,13 @@ export default function AnswerForm({ onSubmit, apiRef, conversationMode }: { onS
         const blob = new Blob(mediaChunksRef.current, { type: 'audio/webm' });
         const fd = new FormData();
         fd.append('audio', new File([blob], 'audio.webm', { type: 'audio/webm' }));
-        // Include exercise context
-        const pdfIdEl = document.querySelector('[data-pdfid]') as HTMLElement | null;
-        const exerciseId = pdfIdEl?.getAttribute('data-exerciseid') || '';
-        const pdfExerciseId = pdfIdEl?.getAttribute('data-pdfid') || '';
-        const pageImagePath = pdfIdEl?.getAttribute('data-pageimg') || '';
-        if (exerciseId) fd.append('exerciseId', exerciseId);
-        if (pdfExerciseId) fd.append('pdfExerciseId', pdfExerciseId);
-        if (pageImagePath) fd.append('pageImagePath', pageImagePath);
-  const resp = await fetch('/api/submissions/audio', { method: 'POST', body: fd });
-  const data = await resp.json();
-  // Don't inject transcript into the textarea; it will appear in the conversation view
+        if (typeof exerciseId === 'number') fd.append('exerciseId', String(exerciseId));
+        if (typeof pdfExerciseId === 'number') fd.append('pdfExerciseId', String(pdfExerciseId));
+        const pagePath = pageImagePath ?? '';
+        if (pagePath) fd.append('pageImagePath', pagePath);
+        const resp = await fetch('/api/submissions/audio', { method: 'POST', body: fd });
+        const data = await resp.json();
+        // Don't inject transcript into the textarea; it will appear in the conversation view
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('history:changed'));
         }
