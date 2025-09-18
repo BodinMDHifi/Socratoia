@@ -10,7 +10,20 @@ export default function NavBar() {
       <Link className="hover:opacity-85 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded" href="/dashboard">Espace élève</Link>
       <Link className="hover:opacity-85 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded" href="/teacher">Espace enseignant</Link>
       {!user?.email ? (
-        <Link className="hover:opacity-85 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded" href="/login">Connexion</Link>
+        <>
+          <Link
+            className="rounded px-3 py-1.5 text-white transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            href="/register"
+          >
+            Inscription
+          </Link>
+          <Link
+            className="rounded border border-white/70 px-3 py-1.5 transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            href="/login"
+          >
+            Connexion
+          </Link>
+        </>
       ) : (
         <button onClick={()=>signOut({ callbackUrl: '/' })} className="hover:opacity-85 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded underline">Déconnexion</button>
       )}
