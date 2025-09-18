@@ -1,0 +1,8 @@
+DATABASE_URL="file:./dev.db"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="dev-secret-change-me"
+OPENAI_API_KEY=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
+FEEDBACK_MODEL=gpt-5-chat-latest
+FEEDBACK_VISION_MODEL=gpt-5-chat-latest
+TTS_MODEL=gpt-4o-mini-tts
+TTS_VOICE=Alloy
