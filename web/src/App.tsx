@@ -52,9 +52,39 @@ type ActivityItem = {
   icon: string
 }
 
+type ConversationMode = 'text' | 'voice'
+
+type ConversationLine = {
+  speaker: 'Élève' | 'Prof IA'
+  message: string
+  meta?: string
+}
+
+type ConversationConfig = {
+  label: string
+  description: string
+  lines: ConversationLine[]
+  footer: {
+    title: string
+    description: string
+  }
+}
+
+type ExerciseFocusItem = {
+  title: string
+  description: string
+}
+
+type ExerciseMetric = {
+  label: string
+  value: string
+  caption?: string
+}
+
 const navLinks = [
   { href: '#methode', label: 'Méthode' },
   { href: '#parcours', label: 'Parcours élèves' },
+  { href: '#exercices', label: 'Espace exercices' },
   { href: '#enseignants', label: 'Espace enseignants' },
   { href: '#admin', label: 'Admin' },
   { href: '#contact', label: 'Contact' },
@@ -127,6 +157,110 @@ const trustPillars = [
     title: 'Interopérable',
     description:
       'API et export conçus pour s’intégrer avec vos ENT et outils favoris.',
+  },
+]
+
+const conversationModes: Record<ConversationMode, ConversationConfig> = {
+  text: {
+    label: 'Mode texte',
+    description:
+      'Idéal pour les séances en salle informatique ou sur tablettes. Les élèves rédigent, argumentent et comparent leurs hypothèses en temps réel.',
+    lines: [
+      {
+        speaker: 'Élève',
+        message: 'Je dois expliquer pourquoi la tension est la même aux bornes de ces deux lampes en dérivation.',
+      },
+      {
+        speaker: 'Prof IA',
+        message:
+          'Relis la partie du cours sur les dipôles en dérivation. Quelles grandeurs restent identiques&nbsp;? Cite-moi une mesure observée pendant la séance.',
+      },
+      {
+        speaker: 'Élève',
+        message: 'Dans mon tableau, les deux tensions sont de 4,5 V alors que les intensités sont différentes.',
+      },
+      {
+        speaker: 'Prof IA',
+        message:
+          'Très bien. Quelle règle peux-tu formuler à partir de cette observation&nbsp;? Comment pourrais-tu la vérifier sur un autre montage&nbsp;?',
+      },
+    ],
+    footer: {
+      title: 'Synthèse écrite automatisée',
+      description:
+        'La fiche PDF reprend les réponses clés, liste les points à consolider et ajoute une relance pour la prochaine séance.',
+    },
+  },
+  voice: {
+    label: 'Mode voix',
+    description:
+      'Pensé pour les travaux pratiques. Les élèves expliquent à voix haute, l’IA transcrit, analyse l’intonation et relance sans interrompre la manipulation.',
+    lines: [
+      {
+        speaker: 'Prof IA',
+        message:
+          'Je t’écoute. Décris les variations de luminosité pendant que tu modifies la résistance variable.',
+        meta: 'Analyse vocale : débit clair, confiance +8%',
+      },
+      {
+        speaker: 'Élève',
+        message:
+          'Elle diminue progressivement et le multimètre affiche une intensité qui baisse aussi, mais pas la tension.',
+        meta: 'Transcription instantanée',
+      },
+      {
+        speaker: 'Prof IA',
+        message:
+          'Bonne observation. Quel lien peux-tu faire avec la loi d’Ohm&nbsp;? Que se passerait-il si tu doublais la résistance&nbsp;?',
+      },
+      {
+        speaker: 'Élève',
+        message:
+          'L’intensité serait divisée par deux alors que la tension aux bornes du générateur resterait stable.',
+      },
+    ],
+    footer: {
+      title: 'Compte rendu audio + texte',
+      description:
+        'Les segments audio utiles sont découpés, titrés et prêts à être partagés dans ENT ou envoyés aux familles.',
+    },
+  },
+}
+
+const conversationModeOrder: ConversationMode[] = ['text', 'voice']
+
+const exerciseFocusItems: ExerciseFocusItem[] = [
+  {
+    title: 'Préparer la situation problème',
+    description: 'Sélectionnez un contexte, les connaissances mobilisées et les indices à dévoiler en trois paliers.',
+  },
+  {
+    title: 'Animer la discussion socratique',
+    description:
+      'Choisissez le niveau d’exigence&nbsp;: reformulations, contre-exemples ou demandes de preuves pour guider la réflexion.',
+  },
+  {
+    title: 'Boucler avec une trace durable',
+    description:
+      'Générez automatiquement une synthèse texte/voix et déposez-la dans la bibliothèque d’exercices partagée.',
+  },
+]
+
+const exerciseMetrics: ExerciseMetric[] = [
+  {
+    label: 'Temps de parole élève',
+    value: '+62%',
+    caption: 'Calculé sur les trois dernières séances hybrides.',
+  },
+  {
+    label: 'Relances contextuelles',
+    value: '3 paliers',
+    caption: 'Déclenchées automatiquement selon les blocages détectés.',
+  },
+  {
+    label: 'Exports générés',
+    value: 'PDF + audio',
+    caption: 'Téléchargeables en un clic depuis le tableau de bord.',
   },
 ]
 
@@ -308,6 +442,7 @@ function App() {
   const [exerciseForm, setExerciseForm] = useState<ExerciseFormState>(initialExerciseForm)
   const [exerciseFeedback, setExerciseFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [isSavingExercise, setIsSavingExercise] = useState(false)
+  const [activeConversationMode, setActiveConversationMode] = useState<ConversationMode>('text')
   const [studentStats] = useState<StudentStat[]>(initialStudentStats)
   const [selectedClass, setSelectedClass] = useState<'all' | string>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -327,6 +462,7 @@ function App() {
 
   const classOptions = Array.from(new Set(studentStats.map((stat) => stat.className)))
   const sanitizedQuery = searchQuery.trim().toLowerCase()
+  const activeConversation = conversationModes[activeConversationMode]
 
   const filteredStats = studentStats
     .filter((stat) => {
@@ -602,6 +738,92 @@ function App() {
                 <p>{step.description}</p>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section id="exercices" className="section exercise-space">
+          <div className="section-header">
+            <p className="section-kicker">Espace exercices</p>
+            <h2>Dialogue texte/voix, même exigence scientifique.</h2>
+            <p className="section-intro">
+              Construisez des scénarios socratiques riches&nbsp;: un même exercice peut alterner saisie clavier et réponse orale
+              sans perdre la trace pédagogique.
+            </p>
+          </div>
+
+          <div className="exercise-grid">
+            <div className="exercise-conversation">
+              <div className="conversation-card">
+                <div className="conversation-header">
+                  <div className="mode-switch" role="group" aria-label="Modes de conversation">
+                    {conversationModeOrder.map((mode) => {
+                      const config = conversationModes[mode]
+                      const isActive = activeConversationMode === mode
+                      return (
+                        <button
+                          key={mode}
+                          type="button"
+                          className={isActive ? 'mode-button active' : 'mode-button'}
+                          onClick={() => setActiveConversationMode(mode)}
+                          aria-pressed={isActive}
+                        >
+                          {config.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="mode-description">{activeConversation.description}</p>
+                </div>
+
+                <div className="conversation-lines">
+                  {activeConversation.lines.map((line, index) => (
+                    <div
+                      key={`${activeConversationMode}-${index}-${line.speaker}`}
+                      className={`conversation-line ${line.speaker === 'Prof IA' ? 'coach' : 'student'}`}
+                    >
+                      <span className="speaker">{line.speaker}</span>
+                      <p>{line.message}</p>
+                      {line.meta && <span className="conversation-meta">{line.meta}</span>}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="conversation-footer">
+                  <strong>{activeConversation.footer.title}</strong>
+                  <p>{activeConversation.footer.description}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="exercise-insights">
+              <div className="insight-card">
+                <h3>Rituels d’investigation</h3>
+                <ul className="insight-list">
+                  {exerciseFocusItems.map((item) => (
+                    <li key={item.title}>
+                      <strong>{item.title}</strong>
+                      <p>{item.description}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="insight-card accent">
+                <h3>Indicateurs temps réel</h3>
+                <div className="insight-metrics">
+                  {exerciseMetrics.map((metric) => (
+                    <div key={metric.label} className="insight-metric">
+                      <span className="metric-value">{metric.value}</span>
+                      <span className="metric-label">{metric.label}</span>
+                      {metric.caption && <span className="metric-caption">{metric.caption}</span>}
+                    </div>
+                  ))}
+                </div>
+                <p className="insight-note">
+                  Les données restent sous contrôle de l’établissement et s’exportent en un clic vers PDF ou audio sécurisé.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
